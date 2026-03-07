@@ -2,7 +2,8 @@ import { useEffect } from 'react'
 import { useStore } from './store/store'
 import { api } from './api'
 import { useWebSocket } from './hooks/useWebSocket'
-import  Layout  from './components/layouts/Layout.tsx'
+import Layout from './components/layout/Layout'
+import CallUI from './components/CallUI'
 
 export default function App() {
   const { setPeers, setMessages, setRelay, setMyId } = useStore()
@@ -25,5 +26,10 @@ export default function App() {
     init()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  return <Layout />
+  return (
+    <>
+      <Layout />
+      <CallUI />
+    </>
+  )
 }

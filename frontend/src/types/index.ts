@@ -17,6 +17,15 @@ export interface ChatMessage {
   text: string
   timestamp: number
   encrypted: boolean
+  file?: FileInfo
+}
+
+export interface FileInfo {
+  file_id: string
+  filename: string
+  size: number
+  complete: boolean
+  progress: number
 }
 
 export interface WsEvent {
@@ -30,3 +39,14 @@ export type WsEventType =
   | 'peers:update'
   | 'message:received'
   | 'relay:info'
+  | 'file:progress'
+  | 'file:received'
+  | 'signal:received'
+
+export type CallState = 'idle' | 'calling' | 'ringing' | 'active'
+
+export interface SignalData {
+  from_id: string
+  signal_type: 'offer' | 'answer' | 'ice-candidate' | 'hangup'
+  payload: Record<string, unknown>
+}
