@@ -1,15 +1,13 @@
-import uuid
-import time
+from fastapi import APIRouter, File, Form, UploadFile
+from fastapi.responses import Response
 
-from fastapi import APIRouter
-from models import Peer, RelayInfo, ChatMessage, SendRequest
+from models import ChatMessage, Peer, RelayInfo, SendRequest, SignalRequest
 from network.interface import NetworkClient
 from ws.hub import WsHub
 
 
 def create_router(network: NetworkClient, hub: WsHub) -> APIRouter:
     router = APIRouter()
-    history: list[ChatMessage] = []
 
     @router.get("/peers", response_model=list[Peer])
     async def get_peers():
@@ -21,34 +19,37 @@ def create_router(network: NetworkClient, hub: WsHub) -> APIRouter:
 
     @router.get("/messages", response_model=list[ChatMessage])
     async def get_messages():
-        return history
+        return await network.get_messages()
 
     @router.post("/message")
     async def send_message(body: SendRequest):
-        msg = ChatMessage(
-            id=str(uuid.uuid4())[:8],
-            from_id="api-gateway",
-            to=body.to,
-            text=body.text,
-            timestamp=time.time(),
-            encrypted=True,
-        )
-        history.append(msg)
-        if len(history) > 100:
-            history.pop(0)
+        message_id = await network.send_message(body.to, body.text)
+        return {"message_id": message_id}
 
-        await network.send_message(body.to, body.text)
-        await hub.broadcast_raw("message:received", msg.model_dump())
+    @router.post("/file")
+    async def send_file(to: str = Form(...), file: UploadFile = File(...)):
+        file_data = await file.read()
+        filename = file.filename or "upload.bin"
+        file_id = await network.send_file(to=to, file_data=file_data, filename=filename)
+        return {"file_id": file_id}
 
-        return {"message_id": msg.id, "status": "sent"}
+    @router.get("/files")
+    async def get_files():
+        return await network.get_files()
+
+    @router.get("/file/{file_id}")
+    async def get_file(file_id: str):
+        data = await network.get_file(file_id)
+        return Response(content=data, media_type="application/octet-stream")
+
+    @router.post("/signal")
+    async def send_signal(body: SignalRequest):
+        signal_id = await network.send_signal(body.to, body.signal_type, body.payload)
+        return {"signal_id": signal_id}
 
     @router.get("/health")
     async def health():
-        ok = await network.health_check()
-        return {
-            "status": "ok" if ok else "degraded",
-            "ws_clients": hub.count(),
-            "network": "mock" if not ok else "connected",
-        }
+        node_id = await network.get_node_id()
+        return {"status": "ok", "node_id": node_id, "ws_clients": hub.count()}
 
     return router

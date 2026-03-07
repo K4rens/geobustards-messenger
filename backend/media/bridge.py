@@ -10,40 +10,32 @@ class EventBridge:
         self.hub = hub
 
     async def start(self):
-        asyncio.create_task(self._stream_loop())
         asyncio.create_task(self._poll_loop())
         print("[BRIDGE] Started")
 
-    async def _stream_loop(self):
-        """
-        Читать события из network.stream_events()
-        и пробрасывать в WebSocket.
-        При разрыве — реконнект через 2 сек.
-        """
+    async def _poll_loop(self):
         while True:
             try:
-                async for event in self.network.stream_events():
+                events = await self.network.get_events()
+                for event in events:
                     event_type = event.get("type", "")
                     data = event.get("data", {})
-                    print(f"[BRIDGE] Event: {event_type}")
+                    if not isinstance(event_type, str) or not event_type:
+                        continue
+                    if not isinstance(data, dict):
+                        data = {}
                     await self.hub.broadcast_raw(event_type, data)
-            except Exception as e:
-                print(f"[BRIDGE] Stream error: {e}, reconnecting...")
-                await asyncio.sleep(2)
 
-    async def _poll_loop(self):
-        """
-        Каждые 5 сек запрашивать актуальных пиров и relay,
-        пушить в WS чтобы UI всегда был актуален.
-        """
-        while True:
-            await asyncio.sleep(5)
-            try:
                 peers = await self.network.get_peers()
                 relay = await self.network.get_relay()
-                await self.hub.broadcast_raw("peers:update", {
-                    "peers": [p.model_dump() for p in peers],
-                    "relay": relay.model_dump(),
-                })
-            except Exception as e:
-                print(f"[BRIDGE] Poll error: {e}")
+                await self.hub.broadcast_raw(
+                    "peers:update",
+                    {
+                        "peers": [peer.model_dump() for peer in peers],
+                        "relay": relay.model_dump(),
+                    },
+                )
+            except Exception as exc:
+                print(f"[BRIDGE] Poll error: {exc}")
+
+            await asyncio.sleep(2)

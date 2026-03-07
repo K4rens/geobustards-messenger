@@ -27,6 +27,12 @@ class SendRequest(BaseModel):
     text: str
 
 
+class SignalRequest(BaseModel):
+    to: str
+    signal_type: str
+    payload: dict
+
+
 class WsEvent(BaseModel):
     type: str
     data: dict = {}
