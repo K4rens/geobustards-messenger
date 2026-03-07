@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 import uvicorn
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,15 +12,6 @@ from bridge import EventBridge
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="Mesh API")
-
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
     hub = WsHub()
 
     if settings.USE_MOCK:
@@ -32,10 +25,20 @@ def create_app() -> FastAPI:
 
     bridge = EventBridge(network, hub)
 
-    @app.on_event("startup")
-    async def startup():
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
         await bridge.start()
         print(f"[BOOT] API ready on :{settings.API_PORT}")
+        yield
+
+    app = FastAPI(title="Mesh API", lifespan=lifespan)
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     @app.websocket("/ws")
     async def ws_route(websocket: WebSocket):
