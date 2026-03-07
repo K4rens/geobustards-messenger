@@ -25,5 +25,5 @@ export default function App() {
     init()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  return <Layout />
+  return <Layout/>
 }
