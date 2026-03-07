@@ -1,4 +1,4 @@
-# GeoMesh — децентрализованный мессенджер без интернета
+# Geobustards-Messanger — децентрализованный мессенджер без интернета
 
 > **HEX·TEAM** · Nuclear IT Hack 2026 · НИЯУ МИФИ
 
@@ -6,7 +6,7 @@
 
 ## Что это
 
-GeoMesh — система децентрализованной связи, которая работает полностью без интернета и центральных серверов. Узлы сами обнаруживают друг друга, строят mesh-сеть и передают сообщения, файлы и голосовые звонки напрямую — через TCP поверх Wi-Fi.
+Geobustards-Messanger — система децентрализованной связи, которая работает полностью без интернета и центральных серверов. Узлы сами обнаруживают друг друга, строят mesh-сеть и передают сообщения, файлы и голосовые звонки напрямую — через TCP поверх Wi-Fi.
 
 Разработано с нуля за 30 часов хакатона командой из трёх человек.
 
@@ -304,10 +304,10 @@ curl http://localhost:9001/events
 
 ## Команда
 
-**HEX·TEAM** — НИЯУ МИФИ, 2026
+**GeoBastards / HEX·TEAM** — НИЯУ МИФИ, 2026
 
-| Роль | Что делал |
-|------|-----------|
-| Backend Network | TCP transport, flooding, heartbeat, RTT, file chunks, voice UDP, SQLite+Fernet, HTTP API |
-| Backend Media | FastAPI bridge, WebSocket hub, event polling, mock/real client |
-| Frontend | React UI, WebSocket хук, WebRTC контекст, компоненты чата и звонков |
+| Участник | Роль | Зона ответственности |
+|----------|------|----------------------|
+| Афромеев И. А. | Backend Network | TCP transport, flooding, heartbeat, RTT, file chunks, voice UDP, SQLite+Fernet, HTTP API `:9001` |
+| Князьков Н. Д. | Backend Media | FastAPI bridge, WebSocket hub, event polling, mock/real client, HTTP API `:8080` |
+| Баштовой Н. В. | Frontend | React UI, WebSocket хук, WebRTC контекст, компоненты чата, звонков и файлов |
