@@ -1,9 +1,23 @@
+# Claude
 .claude/
 /.claude
 
-# OS / editor
+# Local hackathon archives
+хакатон*.zip
+
+# Local plan and contract docs
+backend1-plan-simplified.md
+backend2-plan-simplified.md
+frontend-plan-simplified.md
+team-plan-simplified.md
+CONTRACT (1).md
+
+# OS
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# VS Code / editor
 .vscode/
 .idea/
 *.swp
@@ -34,7 +48,11 @@ node_modules/
 dist/
 build/
 .vite/
+.next/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# Docker
+*.log

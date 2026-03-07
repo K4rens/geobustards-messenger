@@ -13,8 +13,89 @@ services:
       - "8080:8080"
     networks:
       - mesh
+
+  node1:
+    build: ../backend/network
+    container_name: mesh_node1
+    environment:
+      NODE_ID: node1
+      NODE_NAME: "Node 1"
+      PORT: "9000"
+      API_PORT: "9001"
+      PEERS: "node2:9000,node3:9000,node4:9000"
+      STORAGE_KEY: "ANlL5IQU228mkdN6NJIR9pZGxcidEioKI6UEPPBp4EA="
+      DB_PATH: "/app/data/messages.db"
+    ports:
+      - "9001:9001"
+      - "9002:9002/udp"
+    volumes:
+      - node1_data:/app/data
+    networks:
+      - mesh
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9001/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  node2:
+    build: ../backend/network
+    container_name: mesh_node2
+    environment:
+      NODE_ID: node2
+      NODE_NAME: "Node 2"
+      PORT: "9000"
+      API_PORT: "9001"
+      PEERS: "node1:9000,node3:9000,node4:9000"
+      STORAGE_KEY: "ANlL5IQU228mkdN6NJIR9pZGxcidEioKI6UEPPBp4EA="
+      DB_PATH: "/app/data/messages.db"
+    volumes:
+      - node2_data:/app/data
+    networks:
+      - mesh
+    restart: on-failure
+
+  node3:
+    build: ../backend/network
+    container_name: mesh_node3
+    environment:
+      NODE_ID: node3
+      NODE_NAME: "Node 3"
+      PORT: "9000"
+      API_PORT: "9001"
+      PEERS: "node1:9000,node2:9000,node4:9000"
+      STORAGE_KEY: "ANlL5IQU228mkdN6NJIR9pZGxcidEioKI6UEPPBp4EA="
+      DB_PATH: "/app/data/messages.db"
+    volumes:
+      - node3_data:/app/data
+    networks:
+      - mesh
+    restart: on-failure
+
+  node4:
+    build: ../backend/network
+    container_name: mesh_node4
+    environment:
+      NODE_ID: node4
+      NODE_NAME: "Node 4"
+      PORT: "9000"
+      API_PORT: "9001"
+      PEERS: "node1:9000,node2:9000,node3:9000"
+      STORAGE_KEY: "ANlL5IQU228mkdN6NJIR9pZGxcidEioKI6UEPPBp4EA="
+      DB_PATH: "/app/data/messages.db"
+    volumes:
+      - node4_data:/app/data
+    networks:
+      - mesh
     restart: on-failure
 
 networks:
   mesh:
     driver: bridge
+
+volumes:
+  node1_data:
+  node2_data:
+  node3_data:
+  node4_data:

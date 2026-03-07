@@ -1,0 +1,98 @@
+import asyncio
+import json
+from typing import Callable
+
+
+class Transport:
+    def __init__(self, port: int):
+        self.port = port
+        self.connections: dict[str, asyncio.StreamWriter] = {}
+        self._on_message: Callable[[dict, str], None] = None
+
+    async def start(self):
+        server = await asyncio.start_server(
+            self._handle_connection, "0.0.0.0", self.port
+        )
+        print(f"[TRANSPORT] Listening on :{self.port}")
+        asyncio.create_task(server.serve_forever())
+
+    async def connect(self, address: str) -> bool:
+        if address in self.connections:
+            return True
+        host, port_str = address.split(":")
+        port = int(port_str)
+        try:
+            reader, writer = await asyncio.wait_for(
+                asyncio.open_connection(host, port), timeout=5
+            )
+            self.connections[address] = writer
+            asyncio.create_task(self._read_loop(reader, address))
+            return True
+        except (OSError, asyncio.TimeoutError) as e:
+            print(f"[TRANSPORT] Failed to connect to {address}: {e}")
+            return False
+
+    async def send(self, address: str, data: dict) -> bool:
+        if address not in self.connections:
+            return False
+        writer = self.connections[address]
+        try:
+            message = json.dumps(data) + "\n"
+            writer.write(message.encode())
+            await asyncio.wait_for(writer.drain(), timeout=3.0)
+            return True
+        except (OSError, ConnectionError, asyncio.TimeoutError):
+            await self._remove_connection(address)
+            return False
+
+    async def broadcast(self, data: dict, exclude: str = ""):
+        tasks = []
+        for addr in list(self.connections.keys()):
+            if addr != exclude:
+                tasks.append(self.send(addr, data))
+        await asyncio.gather(*tasks, return_exceptions=True)
+
+    async def _handle_connection(self, reader, writer):
+        addr = writer.get_extra_info("peername")
+        if addr is None:
+            writer.close()
+            await writer.wait_closed()
+            return
+        addr_str = f"{addr[0]}:{addr[1]}"
+        self.connections[addr_str] = writer
+        print(f"[TRANSPORT] Connected: {addr_str}")
+        await self._read_loop(reader, addr_str)
+
+    async def _read_loop(self, reader, addr: str):
+        try:
+            while True:
+                line = await reader.readline()
+                if not line:
+                    break
+                try:
+                    data = json.loads(line.decode().strip())
+                    if self._on_message:
+                        await self._on_message(data, addr)
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    continue
+        except Exception as e:
+            print(f"[TRANSPORT] Error reading from {addr}: {e}")
+        finally:
+            await self._remove_connection(addr)
+
+    async def _remove_connection(self, addr: str):
+        writer = self.connections.pop(addr, None)
+        if writer is None:
+            return
+        try:
+            writer.close()
+            await asyncio.wait_for(writer.wait_closed(), timeout=2.0)
+        except (Exception, asyncio.TimeoutError):
+            pass
+        print(f"[TRANSPORT] Disconnected: {addr}")
+
+    def set_handler(self, fn: Callable[[dict, str], None]):
+        self._on_message = fn
+
+    def get_addrs(self) -> list[str]:
+        return list(self.connections.keys())
