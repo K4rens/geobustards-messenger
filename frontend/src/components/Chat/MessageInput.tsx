@@ -1,11 +1,13 @@
 import { useState, type KeyboardEvent } from 'react'
+import FileTransfer from './FileTransfer'
 
 interface Props {
   onSend: (text: string) => void
   disabled?: boolean
+  activePeerId: string | null
 }
 
-export default function MessageInput({ onSend, disabled }: Props) {
+export default function MessageInput({ onSend, disabled, activePeerId }: Props) {
   const [text, setText] = useState('')
 
   const handleSend = () => {
@@ -23,7 +25,8 @@ export default function MessageInput({ onSend, disabled }: Props) {
   }
 
   return (
-    <div className="flex gap-2 p-3 border-t border-gray-800 bg-gray-900">
+    <div className="flex gap-2 p-3 border-t border-gray-800 bg-gray-900 items-center">
+      <FileTransfer activePeerId={activePeerId} />
       <input
         className="flex-1 bg-gray-800 text-gray-100 text-sm px-3 py-2 rounded-lg outline-none
           placeholder-gray-600 border border-gray-700 focus:border-blue-500 transition-colors"
