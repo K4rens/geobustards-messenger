@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Peer, ChatMessage, RelayInfo } from '../types'
+import type { Peer, ChatMessage, RelayInfo, FileInfo, CallState } from '../types'
 
 interface AppStore {
   peers: Peer[]
@@ -8,6 +8,10 @@ interface AppStore {
   activePeerId: string | null
   connected: boolean
   myId: string | null
+  files: FileInfo[]
+  callState: CallState
+  callPeerId: string | null
+  incomingCall: { from_id: string; name: string } | null
 
   setPeers(peers: Peer[]): void
   setPeerOffline(peer_id: string): void
@@ -17,6 +21,11 @@ interface AppStore {
   setActivePeer(id: string | null): void
   setConnected(v: boolean): void
   setMyId(id: string): void
+  addFile(file: FileInfo): void
+  updateFileProgress(file_id: string, progress: number, complete?: boolean): void
+  setCallState(state: CallState): void
+  setCallPeerId(id: string | null): void
+  setIncomingCall(call: { from_id: string; name: string } | null): void
 }
 
 export const useStore = create<AppStore>(set => ({
@@ -26,6 +35,10 @@ export const useStore = create<AppStore>(set => ({
   activePeerId: null,
   connected: false,
   myId: null,
+  files: [],
+  callState: 'idle',
+  callPeerId: null,
+  incomingCall: null,
 
   setPeers: peers => set({ peers }),
   setPeerOffline: id => set(s => ({
@@ -37,4 +50,11 @@ export const useStore = create<AppStore>(set => ({
   setActivePeer: activePeerId => set({ activePeerId }),
   setConnected: connected => set({ connected }),
   setMyId: myId => set({ myId }),
+  addFile: file => set(s => ({ files: [...s.files, file] })),
+  updateFileProgress: (file_id, progress, complete = false) => set(s => ({
+    files: s.files.map(f => f.file_id === file_id ? { ...f, progress, complete } : f),
+  })),
+  setCallState: callState => set({ callState }),
+  setCallPeerId: callPeerId => set({ callPeerId }),
+  setIncomingCall: incomingCall => set({ incomingCall }),
 }))
