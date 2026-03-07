@@ -1,10 +1,12 @@
 import { useEffect } from 'react'
 import { useStore } from '../store/store'
 import { createWs } from '../api'
-import type { WsEvent, Peer, ChatMessage, RelayInfo } from '../types'
+import type { WsEvent, Peer, ChatMessage, RelayInfo, FileInfo, SignalData } from '../types'
+import { useWebRTC } from './useWebRTC'
 
 export function useWebSocket() {
   const store = useStore()
+  const { handleSignal } = useWebRTC()
 
   useEffect(() => {
     const unsub = createWs((event: WsEvent) => {
@@ -31,6 +33,21 @@ export function useWebSocket() {
         case 'relay:info':
           store.setRelay(event.data as unknown as RelayInfo)
           break
+        case 'file:progress': {
+          const d = event.data as unknown as { file_id: string; progress: number }
+          store.updateFileProgress(d.file_id, d.progress)
+          break
+        }
+        case 'file:received': {
+          const file = event.data as unknown as FileInfo
+          store.addFile({ ...file, complete: true, progress: 100 })
+          break
+        }
+        case 'signal:received': {
+          const d = event.data as unknown as SignalData
+          handleSignal(d.from_id, d.signal_type, d.payload)
+          break
+        }
       }
     })
     return unsub
