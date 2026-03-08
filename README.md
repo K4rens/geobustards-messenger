@@ -302,6 +302,8 @@ curl http://localhost:9001/events
 
 ---
 
+Презентация: https://disk.yandex.ru/d/9kYz9GZumivAwQ
+
 ## Команда
 
 **GeoBastards / HEX·TEAM** — НИЯУ МИФИ, 2026
